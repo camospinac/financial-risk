@@ -4,3 +4,6 @@ sqlalchemy
 asyncpg
 pydantic
 python-dotenv
+psycopg2-binary
+httpx
+aiokafka

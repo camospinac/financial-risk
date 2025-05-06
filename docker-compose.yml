@@ -1,7 +1,7 @@
 version: '3.9'
 
 services:
-  db:
+  user-db:
     image: postgres:15
     container_name: users_db
     restart: always
@@ -19,13 +19,42 @@ services:
     container_name: user_service
     restart: always
     depends_on:
-      - db
+      - user-db
     environment:
-      DATABASE_URL: postgresql://postgres:1234@db:5432/users_db
+      DATABASE_URL: postgresql://postgres:1234@user-db:5432/users_db
     ports:
       - "8000:8000"
     volumes:
       - ./services/user-service:/app
 
+  transaction-db:
+    image: postgres:15
+    container_name: transactions_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: transactions_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_transactions_data:/var/lib/postgresql/data
+
+  transaction-service:
+    build: ./services/transaction-service
+    container_name: transaction_service
+    restart: always
+    depends_on:
+      - transaction-db
+      - user-service
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:1234@transaction-db:5432/transactions_db
+      USER_SERVICE_URL: http://user-service:8000
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./services/transaction-service:/app
+
 volumes:
   postgres_data:
+  postgres_transactions_data:
